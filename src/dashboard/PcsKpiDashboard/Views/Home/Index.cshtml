@@ -1,0 +1,217 @@
+﻿@{
+    ViewBag.Title = "Platform Cloud Service KPI DashBoard";
+}
+<script>
+    window.onload = function () {
+        var coverageData = @Html.Raw(ViewBag.Coverage);
+        var value = @Html.Raw(ViewBag.Average);
+        var totalCount = @Html.Raw(ViewBag.TotalIssueCount);
+        var coverageByServicedatapoints = [];
+        var serviceWithCoverageZero = [];
+        for (var i = 0; i < coverageData.length; i++) {
+            if (coverageData[i].CoveragePercentage > 0) {
+                coverageByServicedatapoints.push({ label: coverageData[i].ProjectName, y: coverageData[i].CoveragePercentage, color: coverageData[i].Color });
+            }
+            else {
+                serviceWithCoverageZero.push(coverageData[i].ProjectName);
+            }
+        }
+        console.log(coverageByServicedatapoints);
+        console.log(value);
+        console.log(serviceWithCoverageZero);
+        console.log(totalCount);
+        if (serviceWithCoverageZero.length > 0) {
+            var text = serviceWithCoverageZero.toString();
+            document.getElementById("zeroCoverage").style.display = "block";
+            document.getElementById("serviceWithzeroCoverage").innerHTML = "<strong> These service " + text + " has Coverage Percentage as Zero</strong>";
+            alert("These service " + text + " has Coverage Percentage as Zero");
+        }
+        var coverageChart = new CanvasJS.Chart("coverageByService", {
+            animationEnabled: true,
+            title: {
+                text: "UTC Code Coverage By services",
+                fontSize: 17
+            },
+            data: [{
+                type: "pie",
+                startAngle: 240,
+                yValueFormatString: "##0.00\"%\"",
+                toolTipContent: "{label}: <strong>{y}</strong>",
+                indexLabel: "{label} {y}",
+                dataPoints: coverageByServicedatapoints
+            }]
+        });
+        var gauge = {
+            title: { text: "Average UTC Percentage", fontSize: 17 },
+            data: { y: value, toolTipContent: "Average Percentage: <strong>{y}%</strong>" }, //gauge value change it
+            maximum: 100
+        };
+
+        var chart = new CanvasJS.Chart("averagePercentage");
+        createGauge(chart);
+        buildSonarqubeDashboard(totalCount);
+        //Function for gauge
+        function createGauge(chart) {
+            //Caluculation of remaining parameters to render gauge with the help of doughnut
+            gauge.unoccupied = {
+                y: gauge.maximum - gauge.data.y,
+                color: "#DEDEDE",
+                toolTipContent: null,
+                highlightEnabled: false,
+                click: function () { gauge.unoccupied.exploded = true; }
+            }
+            gauge.data.click = function () { gauge.data.exploded = true; };
+            if (!gauge.data.color) {
+                if (gauge.data.y <= 69) {
+                    gauge.data.color = "red";
+                }
+                else if (gauge.data.y >= 70 && gauge.data.y <= 85) {
+                    gauge.data.color = "yellow";
+                }
+                else {
+                    gauge.data.color = "#69C434";
+                }
+            }
+            gauge.valueText = { text: "Average Percentage: " + gauge.data.y.toString() + "%", verticalAlign: "center", fontSize: 15, fontFamily: "tahoma" };
+
+            var data = {
+                type: "doughnut",
+                dataPoints: [
+                    {
+                        y: gauge.maximum,
+                        color: "transparent",
+                        toolTipContent: null
+                    },
+                    gauge.data,
+                    gauge.unoccupied
+                ],
+            };
+
+            if (!chart.options.data)
+                chart.options.data = [];
+            chart.options.data.push(data);
+
+            if (gauge.title) {
+                chart.options.title = gauge.title;
+            }
+
+            //For showing value
+            if (!chart.options.subtitles)
+                chart.options.subtitles = [];
+            chart.options.subtitles.push(gauge.valueText);
+
+            chart.render();
+        }
+        coverageChart.render();
+        //Function for sonarqube dashboard
+        function buildSonarqubeDashboard(totalCount) {
+            document.getElementById("bugsCount").innerHTML = "<strong><b>" + totalCount.TotalBugs + "</b></strong>";
+            document.getElementById("bugsCount").style.color = "green";
+            if (totalCount.TotalBugs > 0) {
+                document.getElementById("bugsCount").style.color = "red";
+            }
+            document.getElementById("vulCount").innerHTML = "<strong><b>" + totalCount.TotalVulnerabilities + "</b></strong>";
+            document.getElementById("vulCount").style.color = "green";
+            if (totalCount.TotalVulnerabilities > 0) {
+                document.getElementById("vulCount").style.color = "red";
+            }
+            document.getElementById("criticalCount").innerHTML = "<strong><b>" + totalCount.TotalCritical + "</b></strong>";
+            document.getElementById("criticalCount").style.color = "green";
+            if (totalCount.TotalCritical > 0) {
+                document.getElementById("criticalCount").style.color = "red";
+            }
+            document.getElementById("blockerCount").innerHTML = "<strong><b>" + totalCount.TotalBlocker + "</b></strong>";
+            document.getElementById("blockerCount").style.color = "green";
+            if (totalCount.TotalBlocker > 0) {
+                document.getElementById("blockerCount").style.color = "red";
+            }
+            document.getElementById("majorCount").innerHTML = "<strong><b>" + totalCount.TotalMajor + "</b></strong>";
+            document.getElementById("majorCount").style.color = "green";
+            if (totalCount.TotalMajor > 0) {
+                document.getElementById("majorCount").style.color = "red";
+            }
+            document.getElementById("minorCount").innerHTML = "<strong><b>" + totalCount.TotalMinor + "</b></strong>";
+            document.getElementById("minorCount").style.color = "green";
+            if (totalCount.TotalMinor > 40) {
+                document.getElementById("minorCount").style.color = "red";
+            }
+            document.getElementById("infoCount").innerHTML = "<strong><b>" + totalCount.TotalInfo + "</b></strong>";
+            document.getElementById("infoCount").style.color = "green";
+            if (totalCount.TotalInfo > 50) {
+                document.getElementById("infoCount").style.color = "red";
+            }
+        }
+    }
+</script>
+<br />
+<div class="container-fluid bg-3 text-center">
+    <div class="row" id="zeroCoverage" style="display:none">
+        <p id="serviceWithzeroCoverage" style="color:red;text-align:center"></p>
+    </div>
+    <div class="row">
+        <div class="col-md-4">
+            <div id="averagePercentage" style="height: 360px; width: 600px;"></div>
+            <script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+        </div>
+        <div class="col-md-2">
+        </div>
+        <div class="col-md-4">
+            <div id="coverageByService" style="height: 360px; width: 600px;"></div>
+            <script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+        </div>
+    </div>
+</div>
+<br />
+<br />
+<!--Sonaqube Report Code-->
+<div class="container-fluid bg-3 text-center">
+    <div class="row">
+        <h2><b>Sonarqube Report</b></h2>
+    </div>
+</div>
+<div class="container-fluid bg-3">
+    <div class=" row">
+        <div class="col-sm-2">
+            <p><b>Blocker Count</b></p>
+            <div style="width:100px;padding:10px;border:10px solid grey">
+                <div style="text-align:center;font-size:50px" id="blockerCount"></div>
+            </div>
+        </div>
+        <div class="col-sm-2">
+            <p><b>Critical Count</b></p>
+            <div style="width:100px;padding:10px;border:10px solid grey">
+                <div style="text-align:center;font-size:50px" id="criticalCount"></div>
+            </div>
+        </div>
+        <div class="col-sm-2">
+            <p><b>Bugs Count</b></p>
+            <div style="width:100px;padding:10px;border:10px solid grey">
+                <div style="text-align:center;font-size:50px" id="bugsCount"></div>
+            </div>
+        </div>
+        <div class="col-sm-2">
+            <p><b>Major Count</b></p>
+            <div style="width:100px;padding:10px;border:10px solid grey">
+                <div style="text-align:center;font-size:50px" id="majorCount"></div>
+            </div>
+        </div>
+        <div class="col-sm-2">
+            <p><b>Minor Count</b></p>
+            <div style="width:100px;padding:10px;border:10px solid grey">
+                <div style="text-align:center;font-size:50px" id="minorCount"></div>
+            </div>
+        </div>
+        <div class="col-sm-2">
+            <p><b>Vulnerability Count</b></p>
+            <div style="width:100px;padding:10px;border:10px solid grey">
+                <div style="text-align:center;font-size:50px" id="vulCount"></div>
+            </div>
+        </div>
+        <div class="col-sm-2">
+            <p><b>Info Count</b></p>
+            <div style="width:100px;padding:10px;border:10px solid grey">
+                <div style="text-align:center;font-size:50px" id="infoCount"></div>
+            </div>
+        </div>
+    </div>
+</div>

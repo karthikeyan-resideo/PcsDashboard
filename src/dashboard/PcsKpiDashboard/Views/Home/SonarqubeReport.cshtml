@@ -1,0 +1,101 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Sonarqube Report";
+}
+
+@model IEnumerable<SonarQubeDetailResult>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-4">
+            <h2>Sonarqube Report</h2>
+        </div>
+        <div class="col-md-2">
+        </div>
+        <div class="col-md-2">
+        </div>
+        <div class="col-md-4">
+            <br />
+            <input class="form-control" id="myInput" type="text" placeholder="Search Services.." />
+        </div>
+    </div>
+</div>
+<br />
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr align="center">
+            <th rowspan="2">
+                @Html.DisplayNameFor(x => x.ProjectName)
+            </th>
+            <th rowspan="2">
+                @Html.DisplayNameFor(x => x.Bugs)
+            </th>
+            <th rowspan="2">
+                @Html.DisplayNameFor(x => x.Vulnerabilities)
+            </th>
+            <th rowspan="2">
+                @Html.DisplayNameFor(x => x.CodeSmells)
+            </th>
+            <th colspan="5" align="center">
+                Issues Count By Severity
+            </th>
+            <th rowspan="2">@Html.DisplayNameFor(x => x.ReferenceUrl)</th>
+        </tr>
+        <tr>
+            <th>@Html.DisplayNameFor(x => x.Critical)</th>
+            <th>@Html.DisplayNameFor(x => x.Blocker)</th>
+            <th>@Html.DisplayNameFor(x => x.Major)</th>
+            <th>@Html.DisplayNameFor(x => x.Minor)</th>
+            <th>@Html.DisplayNameFor(x => x.Info)</th>
+        </tr>
+    </thead>
+    <tbody id="myTable">
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.ProjectName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Bugs)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Vulnerabilities)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.CodeSmells)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Critical)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Blocker)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Major)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Minor)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Info)
+                </td>
+                <td>
+                    <a href="@Html.DisplayFor(modelItem => item.ReferenceUrl)" target="_blank">Click Here for Reference</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $("#myInput").on("keyup", function () {
+            var value = $(this).val().toLowerCase();
+            $("#myTable tr").filter(function () {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+        });
+    });
+</script>
